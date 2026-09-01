@@ -58,30 +58,23 @@ There are two primary ways of running the ESM models: through the [**Biohub Plat
 ### Running ESMC Through Hugging Face
 <a name="running-esmc-through-hugging-face"></a>
 
-First, install `esm` from GitHub (a PyPI release is coming soon):
+First, install `esm` from PyPI:
 
 ```
-pip install esm@git+https://github.com/Biohub/esm.git@main
+pip install esm
 ```
 
-Then use the following code to run ESMC using the Transformers library via Hugging Face:
+Then use the following code to run ESMC using weights from Hugging Face:
 
 ```python
 import torch
-from transformers import AutoModelForMaskedLM, AutoTokenizer
-from huggingface_hub import login
-
-# login with your Hugging Face credentials
-login()
+from esm.models.esmc import EsmcForMaskedLM, EsmcTokenizer
 
 # example GFP sequence
 sequences = ["MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVTTFSYGVQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVKFEGDTLVNRIELKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLADHYQQNTPIGDGPVLLPDNHYLSTQSALSKDPNEKRDHMVLLEFVTAAGITHGMDELYK"]
 
-model = AutoModelForMaskedLM.from_pretrained(
-    "biohub/ESMC-6B",
-    device_map="auto",
-).eval()
-tokenizer = AutoTokenizer.from_pretrained("biohub/ESMC-6B")
+model = EsmcForMaskedLM.from_pretrained("biohub/ESMC-6B", device="cuda").eval()
+tokenizer = EsmcTokenizer()
 
 inputs = tokenizer(sequences, return_tensors="pt", padding=True)
 inputs = {k: v.to(model.device) for k, v in inputs.items()}
@@ -104,7 +97,7 @@ Note that our API migrated from forge.evolutionaryscale.ai to [biohub.ai](https:
 To get started with ESM, install the python library using `pip`:
 
 ```
-pip install esm@git+https://github.com/Biohub/esm.git@main
+pip install esm
 ```
 
 Then import the necessary libraries and instantiate your desired model.
@@ -147,23 +140,23 @@ Codebase, model weights, and model variants for ESMC SAEs are available through 
 
 ### Running SAEs Through Hugging Face
 
-First, install `esm` from GitHub (a PyPI release is coming soon):
+First, install `esm` from PyPI:
 
 ```
-pip install esm@git+https://github.com/Biohub/esm.git@main
+pip install esm
 ```
 
-Then use the following code to set up an ESMC SAE using the Transformers library via Hugging Face:
+Then use the following code to set up an ESMC SAE using weights from Hugging Face:
 
 ```python
 import torch
-from transformers import AutoModel, AutoTokenizer
+from esm.models.esmc import EsmcForMaskedLM, EsmcSaeModel, EsmcTokenizer
 
 sequence = "MGSNKSKPKDASQRRRSLEPAENVHGAGGGAFPASQTPSKPASADGHRGPSAAFAPAAAEPKLFGGFNSSDTVTSPQRAGPLAGGVTTFVALYDYESRTETDLSFKKGERLQIVNNTEGDWWLAHSLSTGQTGYIPSNYVAPSDSIQAEEWYFGKITRRESERLLLNAENPRGTFLVRESETTKGAYCLSVSDFDNAKGLNVKHYKIRKLDSGGFYITSRTQFNSLQQLVAYYSKHADGLCHRLTTVCPTSKPQTQGLAKDAWEIPRESLRLEVKLGQGCFGEVWMGTWNGTTRVAIKTLKPGTMSPEAFLQEAQVMKKLRHEKLVQLYAVVSEEPIYIVTEYMSKGSLLDFLKGETGKYLRLPQLVDMAAQIASGMAYVERMNYVHRDLRAANILVGENLVCKVADFGLARLIEDNEYTARQGAKFPIKWTAPEAALYGRFTIKSDVWSFGILLTELTTKGRVPYPGMVNREVLDQVERGYRMPCPPECPESLHDLMCQCWRKEPEERPTFEYLQAFLEDYFTSTEPQYQPGENL"
 
-model = AutoModel.from_pretrained("biohub/ESMC-6B", device_map="auto").eval()
-tokenizer = AutoTokenizer.from_pretrained("biohub/ESMC-6B")
-sae = AutoModel.from_pretrained(
+model = EsmcForMaskedLM.from_pretrained("biohub/ESMC-6B", device="cuda").eval()
+tokenizer = EsmcTokenizer()
+sae = EsmcSaeModel.from_pretrained(
     "biohub/ESMC-6B-sae-k64-codebook16384",
     allow_patterns=["config.json", "layer_30.safetensors", "layer_60.safetensors"],
     device=model.device,
@@ -177,8 +170,8 @@ inputs = {k: v.to(model.device) for k, v in inputs.items()}
 with torch.inference_mode():
     output = model(**inputs)
 
-output["sae_outputs"]["layer60"]  # sparse.coo tensor
-print(output["sae_outputs"]["layer60"].shape)
+output.sae_outputs["layer60"]  # sparse.coo tensor
+print(output.sae_outputs["layer60"].shape)
 
 ```
 ### Running SAEs Through The Biohub Platform
@@ -198,24 +191,24 @@ Codebase, model weights, and model variants for ESMFold2 are available through [
 ### Running ESMFold2 Through Hugging Face
 <a name="running-esmfold2-through-hugging-face"></a>
 
-First, install `esm` from GitHub (a PyPI release is coming soon):
+First, install `esm` from PyPI:
 
 ```
-pip install esm@git+https://github.com/Biohub/esm.git@main
+pip install esm
 ```
 
-Then use the following code to run ESMFold2 locally using the Transformers library via Hugging Face:
+Then use the following code to run ESMFold2 locally using weights from Hugging Face:
 
 ```python
 from esm.models.esmfold2 import (
     DNAInput,
     ESMFold2InputBuilder,
+    EsmFold2Model,
     LigandInput,
     Modification,
     ProteinInput,
     StructurePredictionInput,
 )
-from transformers.models.esmfold2.modeling_esmfold2 import ESMFold2Model
 
 HHAI_SEQ = (
     "MIEIKDKQLTGLRFIDLFAGLGGFRLALESCGAECVYSNEWDKYAQEVYEMNFGEKPEGDITQVNEKTIPDH"
@@ -225,7 +218,7 @@ HHAI_SEQ = (
     "YKVHPSTSQAYKQFGNSVVINVLQYIAYNIGSSLNFKPY"
 )
 
-model = ESMFold2Model.from_pretrained("biohub/ESMFold2").cuda().eval()
+model = EsmFold2Model.from_pretrained("biohub/ESMFold2", device="cuda").eval()
 
 spi = StructurePredictionInput(
     sequences=[
@@ -303,7 +296,7 @@ is enabled.
 Install the `esm` Python package
 
 ```
-pip install esm@git+https://github.com/Biohub/esm.git@main
+pip install esm
 ```
 
 Import the necessary libraries.
